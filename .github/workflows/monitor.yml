@@ -1,0 +1,77 @@
+name: Probe VisaoApi
+
+on:
+  schedule:
+    # A cada 15 minutos em horários OFF-PEAK (4, 19, 34, 49 de cada hora)
+    # Crons redondos (*/15 = :00, :15, :30, :45) competem com milhões de outros workflows
+    # e o GitHub atrasa/pula execuções. Off-peak resolve.
+    - cron: '4,19,34,49 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/probe/**'
+      - '.github/workflows/monitor.yml'
+
+concurrency:
+  group: probe
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Build probe
+        working-directory: tools/probe
+        run: dotnet build -c Release --nologo -v quiet
+
+      - name: Run probe
+        working-directory: tools/probe
+        env:
+          VISAO_API_BASE: ${{ secrets.VISAO_API_BASE }}
+          CNPJ_TESTE: ${{ secrets.CNPJ_TESTE }}
+          TOKEN_RELEASE: ${{ secrets.TOKEN_RELEASE }}
+          TOKEN_SIG_FORMULA: ${{ secrets.TOKEN_SIG_FORMULA }}
+          TOKEN_ACE_LITERAL: ${{ secrets.TOKEN_ACE_LITERAL }}
+          OUTPUT_FILE: ${{ github.workspace }}/data/status.json
+          MAX_ROWS: '200'
+          CONNECT_TIMEOUT_SEC: '60'
+        run: dotnet run -c Release --no-build
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -z "$(git status --porcelain data/status.json)" ]; then
+            echo "no changes"
+            exit 0
+          fi
+          git add data/status.json
+          git commit -m "probe: status update"
+          # Retry com pull --rebase em caso de race (outro push concorrente)
+          for i in 1 2 3 4 5; do
+            if git push origin main; then
+              echo "push ok na tentativa $i"
+              exit 0
+            fi
+            echo "push falhou na tentativa $i — pull --rebase e retry"
+            git pull --rebase origin main || true
+            sleep $((i*2))
+          done
+          echo "push falhou após 5 tentativas"
+          exit 1

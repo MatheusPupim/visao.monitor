@@ -1,0 +1,19 @@
+name = "visao-monitor-cron"
+main = "src/index.js"
+compatibility_date = "2026-05-01"
+workers_dev = true
+
+# Cron real: dispara o workflow GitHub a cada 1 minuto.
+# Como o repo eh publico, GitHub Actions tem minutos ilimitados.
+# Cloudflare Workers respeita o cron com precisao de minuto.
+[triggers]
+crons = ["* * * * *"]
+
+# vars publicas (nao sensiveis)
+[vars]
+GH_OWNER = "MatheusPupim"
+GH_REPO = "visao.monitor"
+GH_WORKFLOW = "monitor.yml"
+GH_REF = "main"
+
+# secret: GH_TOKEN — setado via `wrangler secret put GH_TOKEN` (NUNCA committar)

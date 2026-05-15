@@ -1,0 +1,10 @@
+# Força Cloudflare Pages a NUNCA cachear o status.json no edge.
+# Sem isso, o CDN serve versão stale por minutos mesmo com cache-buster + no-store.
+/data/status.json
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
+
+# Assets estáticos podem cachear normalmente
+/assets/*
+  Cache-Control: public, max-age=3600
