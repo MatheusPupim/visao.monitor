@@ -49,7 +49,7 @@ jobs:
           TOKEN_SIG_FORMULA: ${{ secrets.TOKEN_SIG_FORMULA }}
           TOKEN_ACE_LITERAL: ${{ secrets.TOKEN_ACE_LITERAL }}
           OUTPUT_FILE: ${{ github.workspace }}/data/status.json
-          MAX_ROWS: '200'
+          MAX_ROWS: '1500'
           CONNECT_TIMEOUT_SEC: '60'
         run: dotnet run -c Release --no-build
 
