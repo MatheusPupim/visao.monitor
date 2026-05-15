@@ -1,6 +1,7 @@
 let chart;
 let lastRows = [];
 let rangeMinutes = parseInt(localStorage.getItem('rangeMin') || '1440', 10); // default 24h
+let bucketMin = parseInt(localStorage.getItem('bucketMin') || '5', 10); // default 5min
 const COLORS = {h:'#5DADE2', r:'#48C9B0', a:'#F39C12', v:'#A78BFA'};
 const ENDPOINT_LABEL = {h:'Servidor', r:'Listagem', a:'Acessos', v:'V4 Login'};
 
@@ -142,9 +143,7 @@ function downsample(rows, bucketMin){
 
 function renderChart(){
   const recent = filterByRange(lastRows, rangeMinutes);
-  // Agrupa em buckets de 5min — coleta continua a 1min, mas o grafico mostra 1 ponto/5min
-  // (medias do bucket). Janelas pequenas (30min/2h) mostram tudo sem agrupar.
-  const bucketMin = rangeMinutes <= 120 ? 1 : 5;
+  // Bucket de agrupamento controlado pelo dropdown (1, 5 ou 10 min).
   const sampled = bucketMin === 1 ? recent.map(x => ({
     tsLabel: x.ts.split(' ')[1].substring(0,5), h:x.h, r:x.r, a:x.a, v:x.v
   })) : downsample(recent, bucketMin);
@@ -227,6 +226,17 @@ function setupRangePills(){
   });
 }
 
+function setupBucketSelect(){
+  const sel = document.getElementById('bucketSelect');
+  if(!sel) return;
+  sel.value = String(bucketMin);
+  sel.addEventListener('change', () => {
+    bucketMin = parseInt(sel.value, 10) || 5;
+    localStorage.setItem('bucketMin', String(bucketMin));
+    renderChart();
+  });
+}
+
 async function tick(){
   try{
     const r = await fetch('data/status.json?_='+Date.now(), {cache:'no-store'});
@@ -283,6 +293,7 @@ async function tick(){
 }
 
 setupRangePills();
+setupBucketSelect();
 tick();
 // Polling a cada 5s. Coleta vem do GH a cada 1min, então a maioria dos ticks
 // vai retornar o mesmo JSON — mas garante que assim que uma row nova entra,

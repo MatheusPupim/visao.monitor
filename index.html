@@ -87,8 +87,12 @@ body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#0f172a;col
   padding:0.7rem 1rem;
   display:flex;flex-direction:column;min-height:0;
 }
-.chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem;gap:0.6rem}
+.chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem;gap:0.6rem;flex-wrap:wrap}
 .chart-wrap h3{font-size:0.78rem;color:#cbd5e1;font-weight:600}
+.chart-controls{display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap}
+.bucket-select{display:inline-flex;align-items:center;gap:0.35rem;font-size:0.7rem;color:#94a3b8}
+.bucket-select select{background:#0f172a;border:1px solid #334155;border-radius:7px;padding:0.25rem 0.5rem;color:#e2e8f0;font-size:0.7rem;font-family:inherit;cursor:pointer;outline:none}
+.bucket-select select:hover{border-color:#475569}
 .range-pills{display:flex;gap:0.2rem;background:#0f172a;border:1px solid #334155;border-radius:7px;padding:2px}
 .range-pills button{background:none;border:none;color:#94a3b8;font-size:0.7rem;font-weight:500;padding:0.25rem 0.55rem;border-radius:4px;cursor:pointer;font-family:inherit;transition:background 0.15s,color 0.15s}
 .range-pills button:hover{color:#e2e8f0}
@@ -173,12 +177,22 @@ body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#0f172a;col
   <div class="chart-wrap">
     <div class="chart-header">
       <h3>Latência por endpoint</h3>
-      <div class="range-pills" id="rangePills">
-        <button data-min="30">30min</button>
-        <button data-min="120">2h</button>
-        <button data-min="360">6h</button>
-        <button data-min="720">12h</button>
-        <button data-min="1440" class="active">24h</button>
+      <div class="chart-controls">
+        <label class="bucket-select">
+          <span>Agrupar a cada</span>
+          <select id="bucketSelect">
+            <option value="1">1 min</option>
+            <option value="5" selected>5 min</option>
+            <option value="10">10 min</option>
+          </select>
+        </label>
+        <div class="range-pills" id="rangePills">
+          <button data-min="30">30min</button>
+          <button data-min="120">2h</button>
+          <button data-min="360">6h</button>
+          <button data-min="720">12h</button>
+          <button data-min="1440" class="active">24h</button>
+        </div>
       </div>
     </div>
     <div class="chart-body"><canvas id="ch1"></canvas></div>
