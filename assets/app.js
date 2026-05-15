@@ -110,12 +110,48 @@ function renderEvents(){
 
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 
+// Agrupa rows em buckets de N minutos. Para cada bucket retorna a media de h/r/a/v.
+// Mantem o grafico legivel mesmo com 1440 coletas/dia (24h × 60 = 1440 pontos viram ~288).
+function downsample(rows, bucketMin){
+  if (!rows.length) return [];
+  const bucketMs = bucketMin * 60 * 1000;
+  const groups = new Map();
+  for (const r of rows) {
+    const t = Date.parse(r.tsUtc);
+    if (isNaN(t)) continue;
+    const slotStart = Math.floor(t / bucketMs) * bucketMs;
+    if (!groups.has(slotStart)) groups.set(slotStart, []);
+    groups.get(slotStart).push(r);
+  }
+  const out = [];
+  for (const [slotStart, items] of Array.from(groups.entries()).sort((a,b)=>a[0]-b[0])) {
+    const avg = k => items.reduce((s, x) => s + (x[k] || 0), 0) / items.length;
+    const slotDate = new Date(slotStart - 3*3600*1000); // BRT
+    const hh = String(slotDate.getUTCHours()).padStart(2,'0');
+    const mm = String(slotDate.getUTCMinutes()).padStart(2,'0');
+    out.push({
+      tsLabel: `${hh}:${mm}`,
+      h: +avg('h').toFixed(3),
+      r: +avg('r').toFixed(3),
+      a: +avg('a').toFixed(3),
+      v: +avg('v').toFixed(3),
+    });
+  }
+  return out;
+}
+
 function renderChart(){
   const recent = filterByRange(lastRows, rangeMinutes);
-  const labels = recent.map(x=>x.ts.split(' ')[1].substring(0,5));
+  // Agrupa em buckets de 5min — coleta continua a 1min, mas o grafico mostra 1 ponto/5min
+  // (medias do bucket). Janelas pequenas (30min/2h) mostram tudo sem agrupar.
+  const bucketMin = rangeMinutes <= 120 ? 1 : 5;
+  const sampled = bucketMin === 1 ? recent.map(x => ({
+    tsLabel: x.ts.split(' ')[1].substring(0,5), h:x.h, r:x.r, a:x.a, v:x.v
+  })) : downsample(recent, bucketMin);
+  const labels = sampled.map(x => x.tsLabel);
   const lineDs = (lbl, color, key) => ({
     label: lbl,
-    data: recent.map(x=>x[key]),
+    data: sampled.map(x=>x[key]),
     borderColor: color,
     backgroundColor: color,
     borderWidth: 1.6,
