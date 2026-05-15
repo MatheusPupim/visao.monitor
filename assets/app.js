@@ -36,7 +36,8 @@ function extractEvents(rows){
 
     // Mudança de status
     if(prevStatus !== null && row.status !== prevStatus){
-      tags.push(`${prevStatus} → ${row.status}`);
+      const friendly = {OK:'OK', ALERTA:'Atenção', THANOS:'Limite do plano'};
+      tags.push(`${friendly[prevStatus]||prevStatus} → ${friendly[row.status]||row.status}`);
     }
 
     // Endpoints com HTTP error (5xx ou timeout)
