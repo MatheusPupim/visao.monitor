@@ -99,7 +99,7 @@ function renderEvents(){
       ? `<div class="em em-tag">${e.tags.map(escapeHtml).join(' · ')}</div>`
       : '';
     const statusEmoji = {ok:'🟢',alerta:'🟡',thanos:'🔴'}[e.severity] || '⚪';
-    const severityLbl = {ok:'OK',alerta:'ALERTA',thanos:'LIMITE'}[e.severity] || e.severity.toUpperCase();
+    const severityLbl = {ok:'Tudo OK',alerta:'Atenção',thanos:'Limite do plano'}[e.severity] || e.severity;
     return `<div class="event ${e.severity}${hasTags?' highlight':''}">
       <div class="et">${statusEmoji} ${time} · ${severityLbl}</div>
       <div class="em">srv ${fmtTime(e.h)} · lista ${fmtTime(e.r)} · acesso ${fmtTime(e.a)} · login ${fmtTime(e.v)}</div>
@@ -218,7 +218,8 @@ async function tick(){
     } else {
       st.className = 'status '+last.status.toLowerCase();
       document.getElementById('sval').textContent = lbl.v;
-      document.getElementById('sts').textContent = `${last.ts} (Brasília) · há ${ageMin} min`;
+      const horaSomente = last.ts.split(' ')[1] || last.ts;
+      document.getElementById('sts').textContent = `Última atualização ${horaSomente}`;
       // bolinha removida (era #semoji)
     }
 
