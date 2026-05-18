@@ -308,3 +308,44 @@ document.addEventListener('visibilitychange', () => {
 });
 window.addEventListener('focus', tick);
 window.addEventListener('pageshow', tick);
+
+// ---- Auto-reload quando sai versão nova do site ----
+// Vigia o ETag de index.html e app.js. Quando o Cloudflare Pages publica um
+// deploy novo, o ETag muda e a aba se recarrega sozinha (equivale a Ctrl+F5).
+// Commits do probe só tocam data/status.json — não disparam reload.
+const WATCH_FILES = ['index.html', 'assets/app.js'];
+let watchBaseline = null;
+
+async function fileTag(path){
+  try{
+    const r = await fetch(path, {method:'HEAD', cache:'no-store'});
+    return r.headers.get('etag') || r.headers.get('last-modified') || '';
+  }catch(e){ return null; }
+}
+
+function autoReloadAllowed(){
+  const now = Date.now();
+  let log = [];
+  try{ log = JSON.parse(sessionStorage.getItem('autoReloadLog') || '[]'); }catch(e){}
+  log = log.filter(t => now - t < 300000);   // janela de 5 min
+  if(log.length >= 3) return false;          // 3+ reloads em 5min = provável loop, desiste
+  log.push(now);
+  sessionStorage.setItem('autoReloadLog', JSON.stringify(log));
+  return true;
+}
+
+async function checkForUpdate(){
+  const tags = await Promise.all(WATCH_FILES.map(fileTag));
+  if(tags.some(t => t === null)) return;       // rede instável: tenta no próximo ciclo
+  const sig = tags.join('|');
+  if(watchBaseline === null){ watchBaseline = sig; return; }
+  if(sig === watchBaseline) return;
+  if(!autoReloadAllowed()){ console.warn('[monitor] auto-reload pausado (muitos reloads seguidos).'); return; }
+  location.reload();
+}
+
+checkForUpdate();
+setInterval(checkForUpdate, 30000);
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible') checkForUpdate();
+});
