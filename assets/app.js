@@ -45,10 +45,10 @@ function extractEvents(rows){
       const codeKey = k+'c';
       const vivo = row[codeKey] >= 200 && row[codeKey] < 500;
       if(!vivo){
-        if(!prevErr[k]) tags.push(`${ENDPOINT_LABEL[k]} caiu`);
+        if(!prevErr[k]) tags.push(`${ENDPOINT_LABEL[k]} sem resposta (60s+)`);
         prevErr[k] = true;
       } else {
-        if(prevErr[k]) tags.push(`${ENDPOINT_LABEL[k]} recuperado`);
+        if(prevErr[k]) tags.push(`${ENDPOINT_LABEL[k]} voltou a responder`);
         prevErr[k] = false;
       }
     }
