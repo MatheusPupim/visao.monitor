@@ -3,7 +3,7 @@ let lastRows = [];
 let rangeMinutes = parseInt(localStorage.getItem('rangeMin') || '1440', 10); // default 24h
 let bucketMin = parseInt(localStorage.getItem('bucketMin') || '5', 10); // default 5min
 const COLORS = {h:'#5DADE2', r:'#48C9B0', a:'#F39C12', v:'#A78BFA'};
-const ENDPOINT_LABEL = {h:'Servidor', r:'Listagem', a:'Acessos', v:'V4 Login'};
+const ENDPOINT_LABEL = {h:'Servidor', r:'Atualizações', a:'Banco de dados', v:'Licença do cliente'};
 
 function fmtTime(s){if(typeof s!=='number')return '—';if(s>=10)return s.toFixed(1)+'s';if(s>=1)return s.toFixed(2)+'s';return Math.round(s*1000)+'ms'}
 function cls(t,c){const vivo=(c>=200&&c<500);if(!vivo||t>30)return 'thanos';if(t>10)return 'alerta';return 'ok'}
@@ -104,7 +104,7 @@ function renderEvents(){
     const severityLbl = {ok:'Tudo OK',alerta:'Atenção',thanos:'Limite do plano'}[e.severity] || e.severity;
     return `<div class="event ${e.severity}${hasTags?' highlight':''}">
       <div class="et">${statusEmoji} ${time} · ${severityLbl}</div>
-      <div class="em">srv ${fmtTime(e.h)} · lista ${fmtTime(e.r)} · acesso ${fmtTime(e.a)} · login ${fmtTime(e.v)}</div>
+      <div class="em">srv ${fmtTime(e.h)} · versões ${fmtTime(e.r)} · banco ${fmtTime(e.a)} · licença ${fmtTime(e.v)}</div>
       ${tagsHtml}
     </div>`;
   }).join('');
@@ -163,9 +163,9 @@ function renderChart(){
   });
   const ds = [
     lineDs('Servidor', COLORS.h, 'h'),
-    lineDs('Listagem', COLORS.r, 'r'),
-    lineDs('Acessos',  COLORS.a, 'a'),
-    lineDs('V4 Login', COLORS.v, 'v'),
+    lineDs('Atualizações', COLORS.r, 'r'),
+    lineDs('Banco de dados', COLORS.a, 'a'),
+    lineDs('Licença do cliente', COLORS.v, 'v'),
   ];
 
   if(chart){
